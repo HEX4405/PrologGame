@@ -1,4 +1,6 @@
 :- dynamic board/1.
+:- dynamic checklist/1.
+:- dynamic traitor/1.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Definition and init
 
@@ -29,6 +31,10 @@ grid(8,1,0),grid(8,2,0),grid(8,3,0),grid(8,4,0),grid(8,5,0),grid(8,6,0),grid(8,7
 find_grid(Grid, [Grid|_]).
 find_grid(Grid, [_|Rest]) :-
 	find_grid(Grid, Rest).
+
+%change color of a grid
+switch(b,w).
+switch(w,b).
 	
 %remove an element from a list
 %WARNING : do not use it alone!!!
@@ -46,6 +52,7 @@ place(Row,Col,Color,Board,NewBoard) :-
 	
 %place a piece and flip any other pieces may concern
 move(Row,Col,Color,Board,NewBoard) :-
+	board(Board),
 	valide_move(Row,Col,Color,Board),
 	turn_pieces(Row,Col,Color,Board,NewBoard).
 	
@@ -55,11 +62,50 @@ valide_move(Row,Col,Color,Board) :-
 	find_opponent(Row,Col,Color,Board). 
 	
 %TODO :  check if in a direction there is at least an opposite piece
-find_opponent(_,_,_,Board) :- true. %TestMark
+%find_opponent(_,_,_,Board) :- true. %TestMark
+find_opponent(Row,Col,Color,Board) :-
+	board(Board),
+	(fo_up_left(0,Row,Col,Color,Board);
+	fo_up(0,Row,Col,Color,Board);
+	fo_up_right(0,Row,Col,Color,Board);
+	fo_left(0,Row,Col,Color,Board);
+	fo_right(0,Row,Col,Color,Board);
+	fo_down_left(0,Row,Col,Color,Board);
+	fo_down(0,Row,Col,Color,Board);
+	fo_down_right(0,Row,Col,Color,Board)).
+	
+	
+fo_up_left(ColorChangedTime,Row,Col,Color,Board):-false.
+	
+fo_up(ColorChangedTime,Row,Col,Color,Board):-false.
+
+fo_up_right(ColorChangedTime,Row,Col,Color,Board):-false.
+
+fo_left(2,_,_,_,Board) :- true.
+fo_left(ColorChangedTime,Row,Col,Color,Board):-
+	ColorChangedTime<2,
+	Col1 is Col - 1,
+	not(find_grid(grid(Row,Col1,0),Board)),
+	((find_grid(grid(Row,Col1,switch(Color)),Board),ColorChangedTime1 is ColorChangedTime+1,fo_left(ColorChangedTime1,Row,Col1,switch(Color),Board));
+	(find_grid(grid(Row,Col1,Color),Board)),fo_left(ColorChangedTime,Row,Col1,Color,Board)),
+	!.
+	
+fo_right(ColorChangedTime,Row,Col,Color,Board):-false.
+
+fo_down_left(ColorChangedTime,Row,Col,Color,Board):-false.
+
+fo_down(ColorChangedTime,Row,Col,Color,Board):-false.
+
+fo_down_right(ColorChangedTime,Row,Col,Color,Board):-false.
 %fo_up_left(), fo_up(), ... fo_down_right() for eight directions.
+%
+
+	
+
 
 %TODO :  flip pieces after moves
-turn_pieces(Row,Col,Color,Board,NewBoard) :- true.
+turn_pieces(Row,Col,Color,Board,NewBoard) :- 
+	place(Row,Col,Color,Board,NewBoard).
 %tp_up_left(), tp_up(), ... tp_down_right() for eight directions.
 
 %TODO count pieces for a player
