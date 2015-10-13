@@ -11,7 +11,7 @@ grid(X,Y,Color) :-
 
 
 %initialisation of the borad
-init_board() :-
+init_board(X) :-
 assert(board([
 grid(1,1,0),grid(1,2,0),grid(1,3,0),grid(1,4,0),grid(1,5,0),grid(1,6,0),grid(1,7,0),grid(1,8,0),
 grid(2,1,0),grid(2,2,0),grid(2,3,0),grid(2,4,0),grid(2,5,0),grid(2,6,0),grid(2,7,0),grid(2,8,0),
@@ -38,6 +38,7 @@ remove(X, [X1|Y], [X1|Z]) :- remove(X,Y,Z).
 %place or change a piece without checking feasability
 %WARNING : do not use it alone!!!
 place(Row,Col,Color,Board,NewBoard) :-
+	board(Board),
 	remove(grid(Row,Col,_),Board,Board1),
 	NewBoard = [grid(Row,Col,Color)|Board1],
 	retract(board(_)),
@@ -68,7 +69,7 @@ count(Color,Board,Result).
 % Printing
 
 %print the board	
-print(Board) :- 
+print_board(Board) :- 
 	board(Board),
 	nl, write('+--+--+--+--+--+--+--+--+--+'), 
 	nl, write('|  | 1| 2| 3| 4| 5| 6| 7| 8|'), 
