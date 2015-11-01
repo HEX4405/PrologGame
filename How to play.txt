@@ -3,3 +3,4 @@ TestBoard1.pl
 2.print_board(X).
 3.validate_move(rol,col,color). 
 4.make_move(rol,col,color). 
+5.count_color(Color,Result).

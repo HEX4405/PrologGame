@@ -60,9 +60,24 @@ direction(Index, Row, Col) :-
 	(Index = 6, Row is 1, Col is -1);
 	(Index = 7, Row is 0, Col is -1);
 	(Index = 8, Row is -1, Col is -1).
+
+%check stat of a grid
+color(Color,grid(_,_,C)):-
+	Color = C.
 	
-%TODO count pieces for a player
-count(Color,Board,Result).
+%count pieces for a player
+count(Color,[],0):-
+	!.
+count(Color, [X|T], N) :- 
+	color(Color,X),
+    count(Color, T, N1), 
+    N is N1 + 1. 
+count(Color, [Y|T], N) :- 
+    not(color(Color,Y)),
+    count(Color, T, N).
+count_color(Color,Result):-
+	board(Board),
+	count(Color,Board,Result).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Validation and flip
