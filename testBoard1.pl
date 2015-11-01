@@ -1,7 +1,6 @@
-:- dynamic board/1.
-:- dynamic checklist/1.
-:- dynamic traitor/1.
-:- dynamic buffer/2.
+:- dynamic board/1.  %list of coordinates and stats of each grid in the board
+:- dynamic buffer/2.  %list of turnable pieces
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Definition and init
 
@@ -14,7 +13,7 @@ grid(X,Y,Color) :-
 
 
 %initialisation of the borad
-init_board(X) :-
+init_board() :-
 assert(board([
 grid(1,1,0),grid(1,2,0),grid(1,3,0),grid(1,4,0),grid(1,5,0),grid(1,6,0),grid(1,7,0),grid(1,8,0),
 grid(2,1,0),grid(2,2,0),grid(2,3,0),grid(2,4,0),grid(2,5,0),grid(2,6,0),grid(2,7,0),grid(2,8,0),
@@ -34,8 +33,8 @@ find_grid(Grid, [_|Rest]) :-
 	find_grid(Grid, Rest).
 
 %change color of a grid
-switch(b,w).
-switch(w,b).
+reverse_piece(b, w).
+reverse_piece(w, b).
 	
 %remove an element from a list
 %WARNING : do not use it alone!!!
@@ -51,73 +50,7 @@ place(Row,Col,Color,Board,NewBoard) :-
 	retract(board(_)),
 	assert(board(NewBoard)).
 	
-%place a piece and flip any other pieces may concern
-move(Row,Col,Color,Board,NewBoard) :-
-	board(Board),
-	valide_move(Row,Col,Color,Board),
-	turn_pieces(Row,Col,Color,Board,NewBoard).
-	
-%check if the move is feasible
-valide_move(Row,Col,Color,Board) :-
-	find_grid(grid(Row,Col,0),Board), %check if the grid is empty
-	find_opponent(Row,Col,Color,Board). 
-	
-%TODO :  check if in a direction there is at least an opposite piece
-%find_opponent(_,_,_,Board) :- true. %TestMark
-find_opponent(Row,Col,Color,Board) :-
-	board(Board),
-	(fo_up_left(0,Row,Col,Color,Board);
-	fo_up(0,Row,Col,Color,Board);
-	fo_up_right(0,Row,Col,Color,Board);
-	fo_left(0,Row,Col,Color,Board);
-	fo_right(0,Row,Col,Color,Board);
-	fo_down_left(0,Row,Col,Color,Board);
-	fo_down(0,Row,Col,Color,Board);
-	fo_down_right(0,Row,Col,Color,Board)).
-	
-	
-fo_up_left(ColorChangedTime,Row,Col,Color,Board):-false.
-	
-fo_up(ColorChangedTime,Row,Col,Color,Board):-false.
-
-fo_up_right(ColorChangedTime,Row,Col,Color,Board):-false.
-
-fo_left(2,_,_,_,Board) :- true.
-fo_left(ColorChangedTime,Row,Col,Color,Board):-
-	ColorChangedTime<2,
-	Col1 is Col - 1,
-	not(find_grid(grid(Row,Col1,0),Board)),
-	((find_grid(grid(Row,Col1,switch(Color)),Board),ColorChangedTime1 is ColorChangedTime+1,fo_left(ColorChangedTime1,Row,Col1,switch(Color),Board));
-	(find_grid(grid(Row,Col1,Color),Board)),fo_left(ColorChangedTime,Row,Col1,Color,Board)),
-	!.
-	
-fo_right(ColorChangedTime,Row,Col,Color,Board):-false.
-
-fo_down_left(ColorChangedTime,Row,Col,Color,Board):-false.
-
-fo_down(ColorChangedTime,Row,Col,Color,Board):-false.
-
-fo_down_right(ColorChangedTime,Row,Col,Color,Board):-false.
-%fo_up_left(), fo_up(), ... fo_down_right() for eight directions.
-%
-
-	
-
-
-%TODO :  flip pieces after moves
-turn_pieces(Row,Col,Color,Board,NewBoard) :- 
-	place(Row,Col,Color,Board,NewBoard).
-%tp_up_left(), tp_up(), ... tp_down_right() for eight directions.
-
-%TODO count pieces for a player
-count(Color,Board,Result).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Validation and flip
-
-reverse_piece(b, w).
-reverse_piece(w, b).
-
+%mark eight directions
 direction(Index, Row, Col) :-
 	(Index = 1, Row is -1, Col is 0);
 	(Index = 2, Row is -1, Col is 1);
@@ -127,8 +60,16 @@ direction(Index, Row, Col) :-
 	(Index = 6, Row is 1, Col is -1);
 	(Index = 7, Row is 0, Col is -1);
 	(Index = 8, Row is -1, Col is -1).
+	
+%TODO count pieces for a player
+count(Color,Board,Result).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Validation and flip
+
+%check feasability of a move 
 validate_move(Row,Col,Color) :-
+	retractall(buffer(_,_)),   %empty the buffer
 	board(Board),
 	find_grid(grid(Row,Col,0),Board), %check if the grid is empty
 	((check_direction(Row,Col,Color,Board,1);true),
@@ -139,14 +80,15 @@ validate_move(Row,Col,Color) :-
 	(check_direction(Row,Col,Color,Board,6);true),
 	(check_direction(Row,Col,Color,Board,7);true),
 	(check_direction(Row,Col,Color,Board,8);true)),
-	listing(buffer(X,Y)).
+	buffer(_,_),    %a move is not feasable if there's no turnable pieces after move
+	listing(buffer(_,_)).   %remove this line when game done.
 
+%check feasability in one direction
 check_direction(Row,Col,Color,Board,Direction) :-
 	direction(Direction, R, C),
 	Row1 is Row+R, Col1 is Col+C,
 	reverse_piece(Color,Color1),
 	check_direction1(Row1,Col1,Color1,Board,Direction).
-
 check_direction1(Row,Col,Color,Board,Direction) :-
 	find_grid(grid(Row,Col,Color),Board),
 	direction(Direction, R, C),
@@ -156,6 +98,7 @@ check_direction1(Row,Col,Color,Board,Direction) :-
 	check_direction1(Row1,Col1,Color,Board,Direction)),
 	assert(buffer(Row,Col)).
 
+%check feasability, place piece, turn pieces
 make_move(Row,Col,Color) :-
 	retractall(buffer(_,_)),
 	validate_move(Row,Col,Color),
@@ -165,9 +108,10 @@ make_move(Row,Col,Color) :-
 	print_board(_),
 	!.
 
+%turn pieces
 flip_buffer(_,_) :- 
-	not(buffer(_,_)),!.
-	
+	not(buffer(_,_)),
+	!.
 flip_buffer(Color,Board) :-
 	buffer(Row,Col),
 	place(Row,Col,Color,Board,NewBoard),
