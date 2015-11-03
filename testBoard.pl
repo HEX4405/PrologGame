@@ -1,6 +1,7 @@
 :- dynamic board/1.  %list of coordinates and stats of each grid in the board
 :- dynamic evaluation_board/1.
 :- dynamic buffer/2.  %list of turnable pieces
+:- dynamic victory_rates/1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Definition and init
@@ -44,22 +45,22 @@ evalgrid(8,1,0),evalgrid(8,2,0),evalgrid(8,3,0),evalgrid(8,4,0),evalgrid(8,5,0),
 
 
 
-%check if a grid is actualy in the board
+% check if a grid is actualy in the board
 find_grid(Grid, [Grid|_]).
 find_grid(Grid, [_|Rest]) :-
 	find_grid(Grid, Rest).
 
-%change color of a grid
+% change color of a grid
 reverse_piece(b, w).
 reverse_piece(w, b).
 	
-%remove an element from a list
-%WARNING : do not use it alone!!!
+% remove an element from a list
+% WARNING : do not use it alone!!!
 remove(X, [X|Y], Y).
 remove(X, [X1|Y], [X1|Z]) :- remove(X,Y,Z).
 	
-%place or change a piece without checking feasability
-%WARNING : do not use it alone!!!
+% place or change a piece without checking feasability
+% WARNING : do not use it alone!!!
 place(Row,Col,Color,Board,NewBoard) :-
 	board(Board),
 	remove(grid(Row,Col,_),Board,Board1),
@@ -67,7 +68,7 @@ place(Row,Col,Color,Board,NewBoard) :-
 	retract(board(_)),
 	assert(board(NewBoard)).
 	
-%mark eight directions
+% mark eight directions
 direction(Index, Row, Col) :-
 	(Index = 1, Row is -1, Col is 0);
 	(Index = 2, Row is -1, Col is 1);
@@ -78,11 +79,11 @@ direction(Index, Row, Col) :-
 	(Index = 7, Row is 0, Col is -1);
 	(Index = 8, Row is -1, Col is -1).
 
-%check stat of a grid
+% check stat of a grid
 color(Color,grid(_,_,C)):-
 	Color = C.
 	
-%count pieces for a player
+% count pieces for a player
 count(Color,[],0):-
 	!.
 count(Color, [X|T], N) :- 
@@ -99,7 +100,7 @@ count_color(Color,Result):-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Validation and flip
 
-%check feasability of a move 
+% check feasability of a move 
 validate_move(Row,Col,Color) :-
 	retractall(buffer(_,_)),   %empty the buffer
 	board(Board),
@@ -115,7 +116,7 @@ validate_move(Row,Col,Color) :-
 	buffer(_,_),    %a move is not feasable if there's no turnable pieces after move
 	listing(buffer(_,_)).   %remove this line when game done.
 
-%check feasability in one direction
+% check feasability in one direction
 check_direction(Row,Col,Color,Board,Direction) :-
 	direction(Direction, R, C),
 	Row1 is Row+R, Col1 is Col+C,
@@ -130,7 +131,7 @@ check_direction1(Row,Col,Color,Board,Direction) :-
 	check_direction1(Row1,Col1,Color,Board,Direction)),
 	assert(buffer(Row,Col)).
 
-%check feasability, place piece, turn pieces
+% check feasability, place piece, turn pieces
 make_move(Row,Col,Color) :-
 	retractall(buffer(_,_)),
 	validate_move(Row,Col,Color),
@@ -139,7 +140,7 @@ make_move(Row,Col,Color) :-
 	flip_buffer(Color,NewBoard),
 	!.
 
-%turn pieces
+% turn pieces
 flip_buffer(_,_) :- 
 	not(buffer(_,_)),
 	!.
@@ -149,7 +150,7 @@ flip_buffer(Color,Board) :-
 	retract(buffer(Row,Col)),
 	flip_buffer(Color,NewBoard).
 
-%Strong IA
+% Strong IA
 
 
 
@@ -324,3 +325,10 @@ move_aux(P, [0|Bs], [P|Bs]).
 
 move_aux(P, [B|Bs], [B|B2s]) :-
     move_aux(P, Bs, B2s).
+
+
+
+
+
+
+
