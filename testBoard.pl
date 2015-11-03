@@ -241,7 +241,7 @@ play :-
 % Ask to human what to do.
 play([Player, play, Board], Player) :- !,
      (
-	 sleep(1),
+	 %sleep(1),
       make_move([Player, play, Board], [NextPlayer, State], Pos1, Pos2), !,
       print_board(_),
       (
@@ -313,7 +313,11 @@ drawPos(_) :-
 
 winPos(J1) :-
 	count_color(0,NbVide),
-    NbVide =:= 0.
+    NbVide =:= 0,
+	count_color(J1,Result),
+	nextPlayer(J1, J2),
+    count_color(J2,Result2),
+    Result > Result2.
 
 
 move_aux(P, [0|Bs], [P|Bs]).
