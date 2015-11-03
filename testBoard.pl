@@ -18,6 +18,7 @@ evalgrid(X,Y,_):-
 
 %initialisation of the borad
 init_board() :-
+retractall(board(_)),
 assert(board([
 grid(1,1,0),grid(1,2,0),grid(1,3,0),grid(1,4,0),grid(1,5,0),grid(1,6,0),grid(1,7,0),grid(1,8,0),
 grid(2,1,0),grid(2,2,0),grid(2,3,0),grid(2,4,0),grid(2,5,0),grid(2,6,0),grid(2,7,0),grid(2,8,0),
