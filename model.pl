@@ -13,9 +13,9 @@ grid(X, Y, Color) :-
 	Y < 9, Y > 0,
 	(Color = b ; Color = w ; Color = 0).
 
-% evalgrid(X,Y,grid) : 
+% evalgrid(X, Y, grid) : 
 	% X,Y coordinates
-evalgrid(X,Y,_):-
+evalgrid(X, Y, _):-
 	X < 9, X > 0,
 	Y < 9,Y > 0.
 

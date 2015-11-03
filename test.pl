@@ -2,7 +2,7 @@
 %%% Test module %%%
 %%%%%%%%%%%%%%%%%%%
 
-:- [testBoard].
+:- [othello].
 
 :- begin_tests(toast).
 

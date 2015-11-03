@@ -5,33 +5,33 @@
 :- dynamic valid_move/3.
 :- dynamic buffer/2.  
 
-find_valid_move1(Player,[]).
+find_valid_move1(Player, []).
 		
-find_valid_move1(Player,[grid(X,Y,_)|Rest]):-
-	validate_move(X,Y,Player),
-	not(valid_move(X,Y,Player)),
-	assert(valid_move(X,Y,Player)),
-	find_valid_move1(Player,Rest),
+find_valid_move1(Player,[grid(X, Y, _)| Rest]):-
+	validate_move(X, Y, Player),
+	not(valid_move(X, Y, Player)),
+	assert(valid_move(X, Y, Player)),
+	find_valid_move1(Player, Rest),
 	!.
 	
-find_valid_move(Player,Board):-
+find_valid_move(Player, Board):-
 	retractall(valid_move(_)),
-	find_valid_move1(Player,Board).
+	find_valid_move1(Player, Board).
 	
 
 heuristic_move(Player, Pos1, Pos2, NewResult) :- 
-	validate_move(Pos1,Pos2,Player),
-	make_fake_move(Player,Pos1,Pos2,NewBoard),
+	validate_move(Pos1, Pos2, Player),
+	make_fake_move(Player, Pos1, Pos2, NewBoard),
 	evaluate_heuristic(NewBoard, Player, Result),
-	max(NewResult,Result,BestResult),
+	max(NewResult, Result, BestResult),
 	heuristic_move(Player, NPos1 , NPos2, BestResult).
 	
 	
 best_result(Player, Pos1, Pos2, Result) :- 
-	validate_move(Pos1,Pos2,Player),
-	make_fake_move(Player,Pos1,Pos2,NewBoard),
+	validate_move(Pos1, Pos2, Player),
+	make_fake_move(Player, Pos1, Pos2, NewBoard),
 	evaluate_heuristic(NewBoard, Player, Result),
-	max(NewResult,Result,BestResult).
+	max(NewResult, Result, BestResult).
 	
 
 is_winner(Board, Color) :-
@@ -66,32 +66,32 @@ evaluate_heuristic(Board, Color, Result) :-
 	(is_draw(Board, Color), Result is 0, !);
 	evaluate_heuristic2(Board, Color, Result).
 
-evaluate_heuristic2([],_,0).	
+evaluate_heuristic2([], _, 0).	
 	
-evaluate_heuristic2([grid(X,Y,Piece)|Board], Color, Result) :-
+evaluate_heuristic2([grid(X, Y, Piece)| Board], Color, Result) :-
 	(Piece = Color,
-	heuristic(H), find_grid(value(X,Y,Value), H),
+	heuristic(H), find_grid(value(X, Y, Value), H),
 	evaluate_heuristic2(Board, Color, Result2),
 	Result is Result2 + Value);
 	(not(Piece = Color),
 	evaluate_heuristic2(Board, Color, Result)).
 	
-make_fake_move(Row,Col,Color,Board,NewBoard1) :-
-	retractall(buffer(_,_)),
-	validate_move(Row,Col,Color),
-	fake_place(Row,Col,Color,Board,NewBoard),
-	fake_flip_buffer(Color,NewBoard,NewBoard1),
+make_fake_move(Row, Col, Color, Board, NewBoard1) :-
+	retractall(buffer(_, _)),
+	validate_move(Row, Col, Color),
+	fake_place(Row, Col, Color, Board, NewBoard),
+	fake_flip_buffer(Color, NewBoard, NewBoard1),
 	!.
 	
-fake_place(Row,Col,Color,Board,NewBoard) :-
-	remove(grid(Row,Col,_),Board,Board1),
-	NewBoard = [grid(Row,Col,Color)|Board1].
+fake_place(Row, Col, Color, Board, NewBoard) :-
+	remove(grid(Row, Col,_), Board, Board1),
+	NewBoard = [grid(Row, Col, Color)| Board1].
 	
-fake_flip_buffer(_,_,_):-
-	not(buffer(_,_)),
+fake_flip_buffer(_, _, _):-
+	not(buffer(_, _)),
 	!.
-fake_flip_buffer(Color,Board,NewBoard):-
-	buffer(Row,Col),
-	fake_place(Row,Col,Color,Board,NewBoard),
-	retract(buffer(Row,Col)),
-	fake_flip_buffer(Color,NewBoard,NewBoard1).
+fake_flip_buffer(Color, Board, NewBoard):-
+	buffer(Row, Col),
+	fake_place(Row, Col, Color, Board, NewBoard),
+	retract(buffer(Row, Col)),
+	fake_flip_buffer(Color, NewBoard, NewBoard1).
