@@ -290,6 +290,11 @@ find_valid_move1(Player,[grid(X,Y,_)|Rest]):-
 	find_valid_move1(Player,Rest),
 	!.
 	
+find_valid_move1(Player,[grid(X,Y,_)|Rest]):-
+	not(validate_move(X,Y,Player)),
+	find_valid_move1(Player,Rest),
+	!.
+	
 find_valid_move(Player,Board):-
 	retractall(valid_move(_)),
 	find_valid_move1(Player,Board).
