@@ -6,6 +6,7 @@
 :- [print].
 :- [model].
 :- [ia_random].
+:- [ia_minmax].
 
 :- dynamic buffer/2. 
 
@@ -20,19 +21,60 @@ flip_buffer(Color, Board) :-
   retract(buffer(Row, Col)),
   flip_buffer(Color, NewBoard).
 
-drawPos() :-
-    count(0, NbVide),
-    NbVide = 0,
-    count(w, Result),
-    count(b, Result2),
-    Result = Result2.
+flip_buffer(_,Board,NextBoard) :- 
+  not(buffer(_,_)),
+  NextBoard=Board,
+  !.
+
+flip_buffer(Color,Board,NextBoard) :-
+  buffer(Row,Col),
+  place_no_modification(Row,Col,Color,Board,NewBoard),
+  retract(buffer(Row,Col)),
+  flip_buffer(Color,NewBoard,NextBoard).
+
+%% drawPos :-
+%%     count(0, NbVide),
+%%     NbVide = 0,
+%%     count(w, Result),
+%%     count(b, Result2),
+%%     Result = Result2.
+
+%% winPos(J1) :-
+%%   count(0, NbVide),
+%%     NbVide = 0,
+%%   count(J1, Result),
+%%   nextPlayer(J1, J2),
+%%     count(J2, Result2),
+%%     Result > Result2.
+
+drawPos :-
+    count(0,NbVide),
+    NbVide =:= 0,
+    count(w,Result),
+    count(b,Result2),
+    Result =:= Result2.
 
 winPos(J1) :-
-  count(0, NbVide),
-    NbVide = 0,
-  count(J1, Result),
+  count(0,NbVide),
+    NbVide =:= 0,
+    count(J1,Result),
   nextPlayer(J1, J2),
-    count(J2, Result2),
+    count(J2,Result2),
+    Result > Result2.
+
+drawPos(_,Board) :-
+    count(0,Board,NbVide),
+    NbVide =:= 0,
+    count(w,Board,Result),
+    count(b,Board,Result2),
+    Result =:= Result2.
+
+winPos(J1,Board) :-
+  count(0,Board,NbVide),
+    NbVide =:= 0,
+    count(J1,Board,Result),
+  nextPlayer(J1, J2),
+    count(J2,Board,Result2),
     Result > Result2.
 
 % check feasability, place piece, turn pieces
@@ -49,7 +91,7 @@ make_move([X1, play, Board], [X2, State], Pos1, Pos2) :-
     (
       winPos(X1), !, State = win ;
       winPos(X2), !, State = win2 ;
-      drawPos(), !, State = draw ;
+      drawPos, !, State = draw ;
       State = play
     ).
 

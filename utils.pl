@@ -73,6 +73,19 @@ validate_move(Row, Col, Color) :-
 	(check_direction(Row,Col,Color,Board,8);true)),
 	buffer(_,_).   %a move is not feasable if there's no turnable pieces after move
 
+validate_move(Board, Row, Col, Color) :-
+	retractall(buffer(_,_)),   %empty the buffer
+	find_grid(grid(Row,Col,0),Board), %check if the grid is empty
+	((check_direction(Row,Col,Color,Board,1);true),
+	(check_direction(Row,Col,Color,Board,2);true),
+	(check_direction(Row,Col,Color,Board,3);true),
+	(check_direction(Row,Col,Color,Board,4);true),
+	(check_direction(Row,Col,Color,Board,5);true),
+	(check_direction(Row,Col,Color,Board,6);true),
+	(check_direction(Row,Col,Color,Board,7);true),
+	(check_direction(Row,Col,Color,Board,8);true)),
+	buffer(_,_).  
+
 % check feasability in one direction
 check_direction(Row,Col,Color,Board,Direction) :-
 	direction(Direction, R, C),
