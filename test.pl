@@ -1,3 +1,7 @@
+%%%%%%%%%%%%%%%%%%%
+%%% Test module %%%
+%%%%%%%%%%%%%%%%%%%
+
 :- [testBoard].
 
 :- begin_tests(toast).
@@ -53,10 +57,10 @@ test(color) :-
 test(color, [fail]) :-
 	color(b, grid(1, 1, w)).
 
-test(count_color) :-
+test(count) :-
 	init_board,
-	count_color(b, 2),
-	count_color(w, 2).
+	count(b, 2),
+	count(w, 2).
 
 test(validate_board) :-
 	init_board,
