@@ -2,6 +2,7 @@
 :- dynamic evaluation_board/1.
 :- dynamic buffer/2.  %list of turnable pieces
 :- dynamic valid_move/3.
+:- dynamic victory_rates/1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Definition and init
@@ -17,11 +18,11 @@ evalgrid(X,Y,_):-
 	X < 9,X > 0,Y < 9,Y > 0.
 
 
+
 %initialisation of the board
-init_board() :-
+init_board :-
 retractall(board(_)),
-assert(board([
-grid(1,1,0),grid(1,2,0),grid(1,3,0),grid(1,4,0),grid(1,5,0),grid(1,6,0),grid(1,7,0),grid(1,8,0),
+assert( board([ grid(1,1,0),grid(1,2,0),grid(1,3,0),grid(1,4,0),grid(1,5,0),grid(1,6,0),grid(1,7,0),grid(1,8,0),
 grid(2,1,0),grid(2,2,0),grid(2,3,0),grid(2,4,0),grid(2,5,0),grid(2,6,0),grid(2,7,0),grid(2,8,0),
 grid(3,1,0),grid(3,2,0),grid(3,3,0),grid(3,4,0),grid(3,5,0),grid(3,6,0),grid(3,7,0),grid(3,8,0),
 grid(4,1,0),grid(4,2,0),grid(4,3,0),grid(4,4,b),grid(4,5,w),grid(4,6,0),grid(4,7,0),grid(4,8,0),
@@ -46,22 +47,22 @@ evalgrid(8,1,0),evalgrid(8,2,0),evalgrid(8,3,0),evalgrid(8,4,0),evalgrid(8,5,0),
 
 
 
-%check if a grid is actualy in the board
+% check if a grid is actualy in the board
 find_grid(Grid, [Grid|_]).
 find_grid(Grid, [_|Rest]) :-
 	find_grid(Grid, Rest).
 
-%change color of a grid
+% change color of a grid
 reverse_piece(b, w).
 reverse_piece(w, b).
 	
-%remove an element from a list
-%WARNING : do not use it alone!!!
+% remove an element from a list
+% WARNING : do not use it alone!!!
 remove(X, [X|Y], Y).
 remove(X, [X1|Y], [X1|Z]) :- remove(X,Y,Z).
 	
-%place or change a piece without checking feasability
-%WARNING : do not use it alone!!!
+% place or change a piece without checking feasability
+% WARNING : do not use it alone!!!
 place(Row,Col,Color,Board,NewBoard) :-
 	board(Board),
 	remove(grid(Row,Col,_),Board,Board1),
@@ -69,7 +70,7 @@ place(Row,Col,Color,Board,NewBoard) :-
 	retract(board(_)),
 	assert(board(NewBoard)).
 	
-%mark eight directions
+% mark eight directions
 direction(Index, Row, Col) :-
 	(Index = 1, Row is -1, Col is 0);
 	(Index = 2, Row is -1, Col is 1);
@@ -80,11 +81,11 @@ direction(Index, Row, Col) :-
 	(Index = 7, Row is 0, Col is -1);
 	(Index = 8, Row is -1, Col is -1).
 
-%check stat of a grid
+% check stat of a grid
 color(Color,grid(_,_,C)):-
 	Color = C.
 	
-%count pieces for a player
+% count pieces for a player
 count(Color,[],0):-
 	!.
 count(Color, [X|T], N) :- 
@@ -101,7 +102,7 @@ count_color(Color,Result):-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Validation and flip
 
-%check feasability of a move 
+% check feasability of a move 
 validate_move(Row,Col,Color) :-
 	retractall(buffer(_,_)),   %empty the buffer
 	board(Board),
@@ -116,7 +117,7 @@ validate_move(Row,Col,Color) :-
 	(check_direction(Row,Col,Color,Board,8);true)),
 	buffer(_,_).   %a move is not feasable if there's no turnable pieces after move
 
-%check feasability in one direction
+% check feasability in one direction
 check_direction(Row,Col,Color,Board,Direction) :-
 	direction(Direction, R, C),
 	Row1 is Row+R, Col1 is Col+C,
@@ -131,7 +132,7 @@ check_direction1(Row,Col,Color,Board,Direction) :-
 	check_direction1(Row1,Col1,Color,Board,Direction)),
 	assert(buffer(Row,Col)).
 
-%check feasability, place piece, turn pieces
+% check feasability, place piece, turn pieces
 make_move(Row,Col,Color) :-
 	retractall(buffer(_,_)),
 	validate_move(Row,Col,Color),
@@ -140,7 +141,7 @@ make_move(Row,Col,Color) :-
 	flip_buffer(Color,NewBoard),
 	!.
 
-%turn pieces
+% turn pieces
 flip_buffer(_,_) :- 
 	not(buffer(_,_)),
 	!.
@@ -150,7 +151,7 @@ flip_buffer(Color,Board) :-
 	retract(buffer(Row,Col)),
 	flip_buffer(Color,NewBoard).
 
-%Strong IA
+% Strong IA
 
 
 
@@ -232,23 +233,22 @@ print_col(Row, Col, Board) :-
 % play : Predicate that launches the game
 
 play :-
-	  init_board,
+	  init_board(),
 	  print_board(),
-	  play([w, play, Board], HumanPlayer).
+	  play([w, play, Board], Player).
 
 
 
 % play(+Position, +HumanPlayer)
 % If next player to play in position is equal to HumanPlayer -> Human must play
 % Ask to human what to do.
-play([Player, play, Board], Player) :- !,
-     (
+play([Player, play, Board], Player) :- 
+     
 	  random_move(Player,Pos1, Pos2,0),
 	  nextPlayer(Player,NextPlayer),
       make_move([Player, play, Board], [NextPlayer,State], Pos1, Pos2), !,
 	  %bestMove([Player, play, Board], [NextPlayer, State]), !,
-	  
-      %print_board(),
+	  print_board(),
       (
         State = win, !,                             % If Player win -> stop
         nl, write('End of game : '),
@@ -265,8 +265,7 @@ play([Player, play, Board], Player) :- !,
         play([NextPlayer, play, Board], NextPlayer) % Else -> continue the game
       )
       ;
-      play([NextPlayer, play, Board], NextPlayer)        %If can't play, let next player play
-    ).
+      play([NextPlayer, play, Board], NextPlayer).     %If can't play, let next player play
 
 
 	
@@ -289,32 +288,26 @@ find_valid_move1(Player,[grid(X,Y,_)|Rest]):-
 	find_valid_move1(Player,Rest),
 	!.
 	
+find_valid_move1(Player,[grid(X,Y,_)|Rest]):-
+	not(validate_move(X,Y,Player)),
+	find_valid_move1(Player,Rest),
+	!.
+	
 find_valid_move(Player,Board):-
-	retractall(valid_move(_)),
+	retractall(valid_move(_,_,_)),
 	find_valid_move1(Player,Board).
 	
 
-heuristic_move(Player, Pos1, Pos2, NewResult) :- 
+heuristic_move(Player, Pos1, Pos2, Result) :- 
+	board(Board),
 	validate_move(Pos1,Pos2,Player),
-	make_fake_move(Player,Pos1,Pos2,NewBoard),
-	evaluate_heuristic(NewBoard, Player, Result),
-	max(NewResult,Result,BestResult),
-	heuristic_move(Player, NPos1 , NPos2, BestResult).
+	make_fake_move(Pos1,Pos2,Player,Board,NewBoard),
+	evaluate_heuristic(NewBoard, Player, Result).
 	
-	result=0
-	foreach(valid_move)
-	{
-		if(valid_move.result > result)
-		{
-			result = valid_move.result;
-		}
-	}
+
 	
-best_result(Player, Pos1, Pos2, Result) :- 
-	validate_move(Pos1,Pos2,Player),
-	make_fake_move(Player,Pos1,Pos2,NewBoard),
-	evaluate_heuristic(NewBoard, Player, Result),
-	max(NewResult,Result,BestResult),
+	
+
 	
 max(X,Y,Y) :- X =< Y, !.
 max(X,Y,X). 
@@ -449,3 +442,4 @@ fake_flip_buffer(Color,Board,NewBoard):-
 	fake_place(Row,Col,Color,Board,NewBoard),
 	retract(buffer(Row,Col)),
 	fake_flip_buffer(Color,NewBoard,NewBoard1).
+
