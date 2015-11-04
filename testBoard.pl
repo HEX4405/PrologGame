@@ -20,7 +20,7 @@ evalgrid(X,Y,_):-
 
 
 %initialisation of the board
-init_board :-
+init_board(_) :-
 retractall(board(_)),
 assert( board([ grid(1,1,0),grid(1,2,0),grid(1,3,0),grid(1,4,0),grid(1,5,0),grid(1,6,0),grid(1,7,0),grid(1,8,0),
 grid(2,1,0),grid(2,2,0),grid(2,3,0),grid(2,4,0),grid(2,5,0),grid(2,6,0),grid(2,7,0),grid(2,8,0),
@@ -191,7 +191,7 @@ bestMove(Pos, NextPos) :-
 % Printing
 
 %print the board	
-print_board() :- 
+print_board(_) :- 
 	board(Board),
 	nl, write('+--+--+--+--+--+--+--+--+--+'), 
 	nl, write('|  | 1| 2| 3| 4| 5| 6| 7| 8|'), 
@@ -232,9 +232,9 @@ print_col(Row, Col, Board) :-
 
 % play : Predicate that launches the game
 
-play :-
-	  init_board(),
-	  print_board(),
+play(_) :-
+	  init_board(_),
+	  print_board(_),
 	  play([w, play, Board], Player).
 
 
@@ -248,7 +248,7 @@ play([Player, play, Board], Player) :-
 	  nextPlayer(Player,NextPlayer),
       make_move([Player, play, Board], [NextPlayer,State], Pos1, Pos2), !,
 	  %bestMove([Player, play, Board], [NextPlayer, State]), !,
-	  print_board(),
+	  print_board(_),
       (
         State = win, !,                             % If Player win -> stop
         nl, write('End of game : '),
@@ -279,38 +279,74 @@ random_move(Player,Pos1,Pos2,Compteur) :-
 
 random_move(Player,Pos1,Pos2) :- random_move(Player,Pos1,Pos2, 0).	  
 
-find_valid_move1(Player,[]).
-		
-find_valid_move1(Player,[grid(X,Y,_)|Rest]):-
-	validate_move(X,Y,Player),
-	not(valid_move(X,Y,Player)),
-	assert(valid_move(X,Y,Player)),
-	find_valid_move1(Player,Rest),
-	!.
-	
-find_valid_move1(Player,[grid(X,Y,_)|Rest]):-
-	not(validate_move(X,Y,Player)),
-	find_valid_move1(Player,Rest),
-	!.
-	
-find_valid_move(Player,Board):-
-	retractall(valid_move(_,_,_)),
-	find_valid_move1(Player,Board).
-	
 
-eval_move(Player, Result) :- 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% heuristic move using minmax
+
+find_valid_move1(_,[],_,[]).
+
+% correction hao.yan
+find_valid_move1(Player,[grid(X,Y,_)|Rest],Board,NewV):-
+	validate_move(Board,X,Y,Player),
+	%not(valid_move(X,Y,Player)),
+	%assert(valid_move(X,Y,Player)),
+	find_valid_move1(Player,Rest,Board,V),
+	not(find_grid(grid(X,Y,Player),V)),
+	NewV=[grid(X,Y,Player)|V],
+	!.
+
+% correction hao.yan
+find_valid_move1(Player,[grid(X,Y,_)|Rest],Board,V):-
+	not(validate_move(Board,X,Y,Player)),
+	find_valid_move1(Player,Rest,Board,V),
+	!.
+
+% correction hao.yan
+find_valid_move(Player,Board,V):-
+	%retractall(valid_move(_,_,_)),
+	find_valid_move1(Player,Board,Board,V).
+
+min_max(min, max).
+min_max(max, min).
+	
+heuristic_move(Player, Pos1, Pos2, Level) :- 
+	Level > 0,
 	board(Board),
-	validate_move(Pos1,Pos2,Player),
-		make_fake_move(Pos1,Pos2,Player,Board,NewBoard),
-		evaluate_heuristic(NewBoard, Player, Result).
+	heuristic_move2(Board, Player, Player, Level, max, Move, Result),
+	Move = grid(Pos1, Pos2, Player),!.
 
-%TODO		
-test(Player, Max, BestResult) :- eval_move(Player,Result),
-									max(BestResult,Result,Max).
-									
-		
+heuristic_move2(Board, Player, Color, 0, _, _,Result) :-
+	evaluate_heuristic(Board, Player, Result).
+
+heuristic_move2(Board, Player, Color, Level, MinMax, Move, Result) :-
+	Level > 0,
+	find_valid_move(Color, Board, V),
+	((V = [],
+	evaluate_heuristic(Board, Player, Result),
+	Move = nomove);
+	(not(V = []),
+	heuristic_move3(Board, Player, V, Level, MinMax, Move, Result))).
+
+heuristic_move3(_,_,[],_,min,_,10000).
+heuristic_move3(_,_,[],_,max,_,-10000).
+
+heuristic_move3(Board, Player, [grid(X,Y,Color)|V], Level, MinMax, Move, Result) :-
+	make_fake_move(X,Y,Color,Board,NewBoard),
+	reverse_piece(Color, Color2),
+	Level2 is Level - 1,
+	min_max(MinMax, MinMax2),
+	heuristic_move2(NewBoard, Player, Color2, Level2, MinMax2, _,Result2),
+	heuristic_move3(Board, Player, V, Level, MinMax, Move2,Result3),
+	((((MinMax = min,
+	Result2 < Result3);
+	(MinMax = max,
+	Result2 > Result3)),
+	Result is Result2,
+	Move = grid(X,Y,Color));
+	(Result is Result3,
+	Move = Move2)).
 	
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	
 
@@ -334,7 +370,7 @@ make_move([X1, play, Board], [X2,State], Pos1, Pos2) :-
     (
       winPos(X1), !, State = win ;
 	  winPos(X2), !, State = win2 ;
-      drawPos(), !, State = draw ;
+      drawPos(_), !, State = draw ;
       State = play
     ).
 
@@ -363,7 +399,7 @@ utility([b, win, _], -1).      % Previous player (MIN) has win.
 utility([_, draw, _], 0).
 
 
-drawPos() :-
+drawPos(_) :-
     count_color(0,NbVide),
     NbVide = 0,
     count_color(w,Result),
@@ -429,9 +465,11 @@ evaluate_heuristic2([grid(X,Y,Piece)|Board], Color, Result) :-
 	(not(Piece = Color),
 	evaluate_heuristic2(Board, Color, Result)).
 	
+
+% correction hao.yan
 make_fake_move(Row,Col,Color,Board,NewBoard1) :-
 	retractall(buffer(_,_)),
-	validate_move(Row,Col,Color),
+	validate_move(Board,Row,Col,Color),
 	fake_place(Row,Col,Color,Board,NewBoard),
 	fake_flip_buffer(Color,NewBoard,NewBoard1),
 	!.
@@ -440,12 +478,28 @@ fake_place(Row,Col,Color,Board,NewBoard) :-
 	remove(grid(Row,Col,_),Board,Board1),
 	NewBoard = [grid(Row,Col,Color)|Board1].
 	
-fake_flip_buffer(_,_,_):-
-	not(buffer(_,_)),
-	!.
-fake_flip_buffer(Color,Board,NewBoard):-
+% correction hao.yan do not use cut
+fake_flip_buffer(_,Board,Board):-
+	not(buffer(_,_)).
+	
+% correction hao.yan fake_flip_buffer(_,_,NewBoard) -> fake_flip_buffer(_,_,NewBoard1)
+fake_flip_buffer(Color,Board,NewBoard1):-
 	buffer(Row,Col),
 	fake_place(Row,Col,Color,Board,NewBoard),
 	retract(buffer(Row,Col)),
 	fake_flip_buffer(Color,NewBoard,NewBoard1).
 
+% correction hao.yan add validate_move(Board,_,_,_)
+% check feasability of a move on a certain board
+validate_move(Board,Row,Col,Color) :-
+	retractall(buffer(_,_)),   %empty the buffer
+	find_grid(grid(Row,Col,0),Board), %check if the grid is empty
+	((check_direction(Row,Col,Color,Board,1);true),
+	(check_direction(Row,Col,Color,Board,2);true),
+	(check_direction(Row,Col,Color,Board,3);true),
+	(check_direction(Row,Col,Color,Board,4);true),
+	(check_direction(Row,Col,Color,Board,5);true),
+	(check_direction(Row,Col,Color,Board,6);true),
+	(check_direction(Row,Col,Color,Board,7);true),
+	(check_direction(Row,Col,Color,Board,8);true)),
+	buffer(_,_).   %a move is not feasable if there's no turnable pieces after move
