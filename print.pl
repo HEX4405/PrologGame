@@ -2,21 +2,16 @@
 %%% Print module %%%
 %%%%%%%%%%%%%%%%%%%%
 
-%print the board	
-print_board :- 
-	board(Board),
-	nl, write('+--+--+--+--+--+--+--+--+--+'), 
-	nl, write('|  | 1| 2| 3| 4| 5| 6| 7| 8|'), 
-	nl, write('+--+--+--+--+--+--+--+--+--+'), 
-	nl, print_row(1, Board), 
-	!.
-
 print_board(Board):- 
   nl, write('+--+--+--+--+--+--+--+--+--+'), 
   nl, write('|  | 1| 2| 3| 4| 5| 6| 7| 8|'), 
   nl, write('+--+--+--+--+--+--+--+--+--+'), 
   nl, print_row(1, Board), 
   !.
+
+print_board :-
+  board(Board),
+  print_board(Board).
 
 % end condition of a row
 print_row(9,_) :- true.

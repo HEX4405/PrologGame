@@ -21,7 +21,7 @@ flip_buffer(Color, Board) :-
   retract(buffer(Row, Col)),
   flip_buffer(Color, NewBoard).
 
-flip_buffer(_,Board,NextBoard) :- 
+flip_buffer(_, Board, NextBoard) :- 
   not(buffer(_,_)),
   NextBoard=Board,
   !.
@@ -31,21 +31,6 @@ flip_buffer(Color,Board,NextBoard) :-
   place_no_modification(Row,Col,Color,Board,NewBoard),
   retract(buffer(Row,Col)),
   flip_buffer(Color,NewBoard,NextBoard).
-
-%% drawPos :-
-%%     count(0, NbVide),
-%%     NbVide = 0,
-%%     count(w, Result),
-%%     count(b, Result2),
-%%     Result = Result2.
-
-%% winPos(J1) :-
-%%   count(0, NbVide),
-%%     NbVide = 0,
-%%   count(J1, Result),
-%%   nextPlayer(J1, J2),
-%%     count(J2, Result2),
-%%     Result > Result2.
 
 drawPos :-
     count(0,NbVide),
@@ -97,20 +82,29 @@ make_move([X1, play, Board], [X2, State], Pos1, Pos2) :-
 
 
 % play : Predicate that launches the game
+%% play :-
+%% 	  init_board,
+%% 	  print_board,
+%% 	  play([w, play, Board], Player).
 play :-
-	  init_board,
-	  print_board,
-	  play([w, play, Board], Player).
+    retract(board(_))->
+    init_board,
+    board(Board),
+    playRandom([w, play, Board], w)
+    ;
+    init_board,
+    board(Board),
+    playRandom([w, play, Board], w).
 
 
 % play(+Position, +Player)
-play([Player, play, Board], Player) :- !,
+playRandom([Player, play, Board], Player) :- !,
     (
-  	  random_move(Player, Pos1, Pos2, 0),
+      nl, write("Random : "), nl,
+  	  random_move(Player, Pos1, Pos2),
   	  nextPlayer(Player, NextPlayer),
       make_move([Player, play, Board], [NextPlayer, State], Pos1, Pos2), !,
-  	  
-      print_board(),
+      print_board,
       (
         State = win, !,                             % If Player win -> stop
         nl, write('End of game : '),
@@ -124,8 +118,35 @@ play([Player, play, Board], Player) :- !,
         nl, write('End of game : '),
         write(' draw !'), nl, nl
         ;
-        play([NextPlayer, play, Board], NextPlayer) % Else -> continue the game
+        board(NextBoard),
+        playMinMax([NextPlayer, play, NextBoard], NextPlayer) % Else -> continue the game
       )
       ;
-      play([NextPlayer, play, Board], NextPlayer)        % If can't play, let next player play
+      board(NextBoard),
+      playMinMax([NextPlayer, play, NextBoard], NextPlayer)        % If can't play, let next player play
+    ).
+
+% play(+Position, +HumanPlayer)
+playMinMax([Player, play, Board], Player) :- !,
+     (
+      nl, write("MinMax : "), nl,
+      bestMove(Player, [Player, play, Board], [NextPlayer, State, NextBoard]), !,
+      print_board,
+      (
+        State = win, !,                             % If Player win -> stop
+        nl, write('End of game : '),
+        write(Player), write(' win !'), nl, nl
+        ;
+        State = win2, !,                             % If Player win -> stop
+        nl, write('End of game : '),
+        write(NextPlayer), write(' win !'), nl, nl
+        ;
+        State = draw, !,                            % If draw -> stop
+        nl, write('End of game : '),
+        write(' draw !'), nl, nl
+        ;
+        playRandom([NextPlayer, play, NextBoard], NextPlayer) % Else -> continue the game
+      )
+      ;
+      playRandom([NextPlayer, play, NextBoard], NextPlayer)        %If player can't play -> NextPlayer
     ).

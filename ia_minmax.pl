@@ -36,8 +36,8 @@ betterOf(Player,_, _, Pos1, Val1, Pos1, Val1).        % Otherwise Pos1 better th
 
 bestMove(Player, [Player, play,Board], [NextPlayer, State, NextBoard]) :-
 	nextPlayer(Player,NextPlayer),
-    minimax(Player,[Player, play,Board], [NextPlayer, State, NextBoard], _),
-    retract(board(_)),
+  minimax(Player,[Player, play,Board], [NextPlayer, State, NextBoard], _),
+  retract(board(_)),
 	assert(board(NextBoard)).
 
 
@@ -75,34 +75,34 @@ utility(Player, [Player, win, _], 1).     % Previous player (MAX) has win.
 utility(Player, [NextPlayer, win, _], -1):- nextPlayer(Player, NextPlayer).      % Previous player (MIN) has win.
 utility(_, [_, draw, _], 0).
 
-playMinMax :-
-	  retract(board(_))->
-	  init_board,
-	  board(Board),
-	  playMinMax([w, play, Board], w)
-	  ;
-	  init_board,
-	  board(Board),
-	  playMinMax([w, play, Board], w).
+%% playMinMax :-
+%% 	  retract(board(_))->
+%% 	  init_board,
+%% 	  board(Board),
+%% 	  playMinMax([w, play, Board], w)
+%% 	  ;
+%% 	  init_board,
+%% 	  board(Board),
+%% 	  playMinMax([w, play, Board], w).
 
-% play(+Position, +HumanPlayer)
-% If next player to play in position is equal to HumanPlayer -> Human must play
-% Ask to human what to do.
-playMinMax([Player, play, Board], Player) :- !,
-     (
-      bestMove(Player, [Player, play, Board], [NextPlayer, State, NextBoard]), !,
-      print_board(NextBoard),
-      (
-        State = win, !,                             % If Player win -> stop
-        nl, write('End of game : '),
-        write(Player), write(' win !'), nl, nl
-        ;
-        State = draw, !,                            % If draw -> stop
-        nl, write('End of game : '),
-        write(' draw !'), nl, nl
-        ;
-        playMinMax([NextPlayer, play, NextBoard], NextPlayer) % Else -> continue the game
-      )
-      ;
-      playMinMax([NextPlayer, play, NextBoard], NextPlayer)        %If player can't play -> NextPlayer
-    ).
+%% % play(+Position, +HumanPlayer)
+%% % If next player to play in position is equal to HumanPlayer -> Human must play
+%% % Ask to human what to do.
+%% playMinMax([Player, play, Board], Player) :- !,
+%%      (
+%%       bestMove(Player, [Player, play, Board], [NextPlayer, State, NextBoard]), !,
+%%       print_board(NextBoard),
+%%       (
+%%         State = win, !,                             % If Player win -> stop
+%%         nl, write('End of game : '),
+%%         write(Player), write(' win !'), nl, nl
+%%         ;
+%%         State = draw, !,                            % If draw -> stop
+%%         nl, write('End of game : '),
+%%         write(' draw !'), nl, nl
+%%         ;
+%%         playMinMax([NextPlayer, play, NextBoard], NextPlayer) % Else -> continue the game
+%%       )
+%%       ;
+%%       playMinMax([NextPlayer, play, NextBoard], NextPlayer)        %If player can't play -> NextPlayer
+%%     ).
